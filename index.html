@@ -1,0 +1,548 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedData Insights | Healthcare Analytics</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+:root {
+  --navy:#142d4e;
+  --blue:#2878d4;
+  --light:#edf5ff;
+  --text:#26364b;
+  --muted:#748399;
+  --white:#fff;
+  --border:#e5ebf2;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+html{scroll-behavior:smooth}
+body{background:#f6f8fc;color:var(--text)}
+button{cursor:pointer;border:0;border-radius:7px;padding:11px 17px;background:var(--blue);color:white;font-weight:600}
+button:hover{opacity:.88}
+a{text-decoration:none;color:inherit}
+input,select,textarea{width:100%;padding:12px;border:1px solid var(--border);border-radius:7px;margin:8px 0;background:white}
+.container{width:90%;max-width:1150px;margin:auto}
+
+/* Navigation */
+nav{background:white;padding:18px 0;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border)}
+.nav-content{display:flex;justify-content:space-between;align-items:center;gap:15px}
+.logo{font-size:21px;font-weight:bold;color:var(--navy)}
+.logo span{color:var(--blue)}
+.nav-links{display:flex;gap:25px;align-items:center;font-size:14px}
+.nav-links a:hover{color:var(--blue)}
+
+/* Landing */
+.hero{padding:95px 0;background:linear-gradient(120deg,#edf5ff,#fff)}
+.hero-content{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center}
+.hero h1{font-size:48px;color:var(--navy);line-height:1.2;margin-bottom:20px}
+.hero h1 span{color:var(--blue)}
+.hero p{line-height:1.8;color:var(--muted);margin-bottom:25px}
+.hero-card{background:white;border-radius:18px;padding:28px;box-shadow:0 12px 35px #173b6712}
+.hero-stat{display:flex;justify-content:space-between;padding:17px 0;border-bottom:1px solid var(--border)}
+.hero-stat:last-child{border:0}
+.hero-stat strong{color:var(--blue)}
+.section{padding:75px 0}
+.section-title{text-align:center;margin-bottom:40px}
+.section-title h2{font-size:32px;color:var(--navy);margin-bottom:12px}
+.section-title p{color:var(--muted);line-height:1.7}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.feature{background:white;padding:28px;border-radius:12px;border:1px solid var(--border)}
+.feature-icon{font-size:30px;margin-bottom:15px}
+.feature h3{margin-bottom:12px;color:var(--navy)}
+.feature p{font-size:14px;line-height:1.7;color:var(--muted)}
+.about{background:white}
+.about-content{max-width:800px;margin:auto;text-align:center;line-height:1.9;color:var(--muted)}
+.contact-box{max-width:600px;margin:auto;background:white;padding:30px;border-radius:12px;border:1px solid var(--border)}
+footer{background:var(--navy);color:white;padding:25px;text-align:center;font-size:13px}
+
+/* Login */
+.login-page{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+.login-box{width:100%;max-width:380px;background:white;padding:35px;border-radius:15px;box-shadow:0 10px 40px #0001}
+.login-box h2{text-align:center;color:var(--navy);margin-bottom:10px}
+.login-box p{text-align:center;color:var(--muted);font-size:13px;margin-bottom:20px}
+.login-box button{width:100%;margin-top:10px}
+.error{color:#d94b4b;text-align:center;font-size:13px}
+
+/* Admin */
+#admin{display:none;min-height:100vh}
+.sidebar{width:225px;background:var(--navy);position:fixed;top:0;bottom:0;left:0;padding:25px 15px;color:white;z-index:5}
+.sidebar .logo{color:white;margin-bottom:35px;padding-left:8px}
+.sidebar button{display:block;width:100%;background:transparent;text-align:left;color:#dce7f5;margin:5px 0;padding:13px}
+.sidebar button:hover,.sidebar button.active{background:#294b74}
+.admin-main{margin-left:225px;padding:28px;min-width:0}
+.admin-header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:25px}
+.admin-header h1{font-size:25px;color:var(--navy)}
+.admin-header p{font-size:13px;color:var(--muted);margin-top:6px}
+.page{display:none}
+.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-bottom:20px}
+.card,.panel{background:white;padding:20px;border-radius:11px;border:1px solid var(--border)}
+.card p{font-size:13px;color:var(--muted)}
+.card h2{font-size:28px;color:var(--blue);margin-top:12px}
+.charts{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.panel h3{color:var(--navy);font-size:17px;margin-bottom:17px}
+canvas{max-height:280px}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px}
+th,td{padding:13px;text-align:left;border-bottom:1px solid var(--border);font-size:13px}
+th{background:#f4f7fb;color:#596b82}
+.status{padding:6px 10px;border-radius:20px;font-size:11px;background:#e4f6ed;color:#16824d}
+.status.pending{background:#fff3dc;color:#a16b00}
+.status.cancelled{background:#ffe8e8;color:#c0392b}
+.actions button{padding:6px 9px;font-size:11px;margin:2px}
+.danger{background:#d94b4b}
+.green{background:#198754}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.insight{background:#edf5ff;padding:13px;margin:9px 0;border-left:4px solid var(--blue);border-radius:5px;font-size:14px}
+.mobile-menu{display:none}
+.small-note{font-size:12px;color:var(--muted);margin-top:12px}
+
+@media(max-width:850px){
+.hero-content{grid-template-columns:1fr}
+.features{grid-template-columns:repeat(2,1fr)}
+.cards{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:650px){
+.nav-links{gap:10px;font-size:12px;flex-wrap:wrap;justify-content:flex-end}
+.logo{font-size:17px}
+.hero{padding:65px 0}
+.hero h1{font-size:35px}
+.features,.charts,.form-grid{grid-template-columns:1fr}
+.sidebar{position:relative;width:100%;padding:12px}
+.sidebar .logo{margin-bottom:8px}
+.sidebar button{display:inline-block;width:auto;padding:9px;font-size:12px}
+.admin-main{margin:0;padding:15px}
+.admin-header{align-items:flex-start;flex-direction:column}
+}
+</style>
+</head>
+
+<body>
+
+<!-- PUBLIC WEBSITE -->
+<div id="website">
+
+<nav>
+<div class="container nav-content">
+<div class="logo">✚ MedData <span>Insights</span></div>
+<div class="nav-links">
+<a href="#home">Home</a>
+<a href="#about">About</a>
+<a href="#features">Features</a>
+<a href="#contact">Contact</a>
+<button onclick="openLogin()">Admin Login</button>
+</div>
+</div>
+</nav>
+
+<section class="hero" id="home">
+<div class="container hero-content">
+<div>
+<p style="color:#2878d4;font-weight:bold">HEALTHCARE ANALYTICS PLATFORM</p>
+<h1>Smarter Healthcare Through <span>Data Insights.</span></h1>
+<p>MedData Insights is a healthcare analytics demonstration platform designed to organize patient information, monitor department statistics and transform data into meaningful insights.</p>
+<button onclick="openLogin()">Explore Dashboard →</button>
+<button style="background:#e5effc;color:#2878d4" onclick="document.getElementById('features').scrollIntoView()">Explore Features</button>
+</div>
+<div class="hero-card">
+<h3 style="color:#142d4e;margin-bottom:15px">Platform Overview</h3>
+<div class="hero-stat"><span>Patient Management</span><strong>Available</strong></div>
+<div class="hero-stat"><span>Data Analytics</span><strong>Available</strong></div>
+<div class="hero-stat"><span>Report Generation</span><strong>Available</strong></div>
+<div class="hero-stat"><span>Dashboard Access</span><strong>Admin</strong></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="about">
+<div class="container">
+<div class="section-title">
+<h2>About MedData Insights</h2>
+<p>Making healthcare information easier to understand and manage.</p>
+</div>
+<div class="about-content">
+<p>MedData Insights is a web-based healthcare analytics project developed to demonstrate how digital tools can support patient record management and healthcare data analysis. It brings patient records, department distribution and statistical reports together in one simple interface.</p>
+<p style="margin-top:15px">The project demonstrates the use of HTML, CSS, JavaScript, Chart.js and browser-based data storage.</p>
+</div>
+</div>
+</section>
+
+<section class="section" id="features">
+<div class="container">
+<div class="section-title">
+<h2>Platform Features</h2>
+<p>Everything organized in one simple dashboard.</p>
+</div>
+<div class="features">
+<div class="feature"><div class="feature-icon">♙</div><h3>Patient Management</h3><p>Register, search, update and manage demonstration patient records.</p></div>
+<div class="feature"><div class="feature-icon">▥</div><h3>Data Analytics</h3><p>Explore age-group analysis, patient status and department distribution.</p></div>
+<div class="feature"><div class="feature-icon">▤</div><h3>Reports</h3><p>Generate and export patient summaries in CSV and PDF formats.</p></div>
+<div class="feature"><div class="feature-icon">▦</div><h3>Dashboard</h3><p>View key statistics and patient information in one place.</p></div>
+<div class="feature"><div class="feature-icon">⌕</div><h3>Search & Filter</h3><p>Find records using patient names and status filters.</p></div>
+<div class="feature"><div class="feature-icon">⚙</div><h3>Admin Panel</h3><p>Access administrative tools through a demonstration login.</p></div>
+</div>
+</div>
+</section>
+
+<section class="section" id="contact" style="background:#edf5ff">
+<div class="container">
+<div class="section-title">
+<h2>Project Information</h2>
+<p>A student project demonstrating healthcare data management and analytics.</p>
+</div>
+<div class="contact-box">
+<h3 style="color:#142d4e;margin-bottom:12px">MedData Insights</h3>
+<p style="color:#748399;line-height:1.8">Developed as a BCA portfolio project using front-end web technologies.</p>
+<button style="margin-top:20px" onclick="openLogin()">Open Admin Dashboard</button>
+</div>
+</div>
+</section>
+
+<footer>© 2026 MedData Insights. Educational demonstration project.</footer>
+</div>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+<div class="login-box">
+<h2>MedData Insights</h2>
+<p>Administrator Login</p>
+<input id="username" placeholder="Username" autocomplete="username">
+<input id="password" type="password" placeholder="Password" autocomplete="current-password">
+<button onclick="login()">Login to Dashboard</button>
+<p class="error" id="loginError"></p>
+<p class="small-note">Demo login: admin / meddata123</p>
+<button style="background:#eaf1fa;color:#2878d4" onclick="backHome()">Back to Website</button>
+</div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="admin">
+<aside class="sidebar">
+<div class="logo">✚ MedData Insights</div>
+<button class="active" onclick="showPage('dashboard',this)">▦ Dashboard</button>
+<button onclick="showPage('patients',this)">♙ Patients</button>
+<button onclick="showPage('registration',this)">＋ Registration</button>
+<button onclick="showPage('analytics',this)">▥ Analytics</button>
+<button onclick="showPage('reports',this)">▤ Reports</button>
+<button onclick="showPage('settings',this)">⚙ Settings</button>
+<button onclick="logout()">⇥ Logout</button>
+</aside>
+
+<main class="admin-main">
+<header class="admin-header">
+<div><h1 id="pageTitle">Dashboard</h1><p>Healthcare Analytics Administration</p></div>
+<span id="date"></span>
+</header>
+
+<section class="page active" id="dashboard">
+<div class="cards">
+<div class="card"><p>Total Patients</p><h2 id="total">0</h2></div>
+<div class="card"><p>Completed</p><h2 id="completed">0</h2></div>
+<div class="card"><p>Pending</p><h2 id="pending">0</h2></div>
+<div class="card"><p>Completion Rate</p><h2 id="rate">0%</h2></div>
+</div>
+<div class="charts">
+<div class="panel"><h3>Patient Status</h3><canvas id="statusChart"></canvas></div>
+<div class="panel"><h3>Department Distribution</h3><canvas id="departmentChart"></canvas></div>
+</div>
+<div class="panel" style="margin-top:18px"><h3>Smart Insights</h3><div id="insights"></div></div>
+</section>
+
+<section class="page" id="patients">
+<div class="panel">
+<h3>Patient Records</h3>
+<input id="search" placeholder="Search by name..." oninput="renderPatients()">
+<select id="filter" onchange="renderPatients()">
+<option value="">All Statuses</option>
+<option>Completed</option><option>Pending</option><option>Cancelled</option>
+</select>
+<div class="table-wrap">
+<table>
+<thead><tr><th>ID</th><th>Name</th><th>Age</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+<tbody id="patientTable"></tbody>
+</table>
+</div>
+</div>
+</section>
+
+<section class="page" id="registration">
+<div class="panel">
+<h3>Register a Patient</h3>
+<div class="form-grid">
+<div><label>Patient Name</label><input id="patientName" placeholder="Enter name"></div>
+<div><label>Age</label><input id="patientAge" type="number" min="1" max="120" placeholder="Enter age"></div>
+<div><label>Department</label>
+<select id="patientDepartment">
+<option value="">Select Department</option>
+<option>Cardiology</option><option>Neurology</option><option>Orthopedics</option><option>General Medicine</option><option>Pediatrics</option>
+</select></div>
+<div><label>Status</label>
+<select id="patientStatus"><option>Pending</option><option>Completed</option><option>Cancelled</option></select></div>
+</div>
+<button onclick="addPatient()">Register Patient</button>
+<p id="message" style="margin-top:12px;color:green"></p>
+</div>
+</section>
+
+<section class="page" id="analytics">
+<div class="cards">
+<div class="card"><p>Average Age</p><h2 id="averageAge">0</h2></div>
+<div class="card"><p>Youngest Patient</p><h2 id="youngest">0</h2></div>
+<div class="card"><p>Oldest Patient</p><h2 id="oldest">0</h2></div>
+<div class="card"><p>Total Records</p><h2 id="analyticsTotal">0</h2></div>
+</div>
+<div class="charts">
+<div class="panel"><h3>Age Group Analysis</h3><canvas id="ageChart"></canvas></div>
+<div class="panel"><h3>Department Analysis</h3><canvas id="analyticsDepartment"></canvas></div>
+</div>
+</section>
+
+<section class="page" id="reports">
+<div class="panel">
+<h3>Reports Centre</h3>
+<p style="color:#748399;margin-bottom:15px">Export the current demonstration patient records.</p>
+<button onclick="exportCSV()">Download CSV</button>
+<button class="green" onclick="exportPDF()">Download PDF</button>
+</div>
+<div class="panel"><h3>Report Summary</h3><p id="reportSummary"></p></div>
+</section>
+
+<section class="page" id="settings">
+<div class="panel">
+<h3>System Settings</h3>
+<p>Project: MedData Insights</p>
+<p class="small-note">Version 4.0 | Storage: Browser LocalStorage</p>
+<br>
+<button class="danger" onclick="clearData()">Clear All Patient Records</button>
+</div>
+</section>
+</main>
+</div>
+
+<script>
+// DEMONSTRATION DATA
+const KEY="medDataInsightsPatients_v1";
+const sample=[
+{id:1,name:"Arun Kumar",age:32,department:"Cardiology",status:"Completed"},
+{id:2,name:"Priya Sharma",age:24,department:"Neurology",status:"Pending"},
+{id:3,name:"Rahul Das",age:45,department:"Orthopedics",status:"Completed"},
+{id:4,name:"Meena Ravi",age:16,department:"Pediatrics",status:"Pending"},
+{id:5,name:"Karthik S",age:58,department:"General Medicine",status:"Cancelled"},
+{id:6,name:"Anitha M",age:39,department:"Cardiology",status:"Completed"},
+{id:7,name:"Vijay R",age:67,department:"Orthopedics",status:"Pending"},
+{id:8,name:"Divya P",age:28,department:"Neurology",status:"Completed"}
+];
+
+let patients;
+try{
+let saved=localStorage.getItem(KEY);
+patients=saved===null?sample:JSON.parse(saved);
+if(!Array.isArray(patients))patients=sample;
+}catch(e){patients=sample;}
+
+let charts={};
+const departments=["Cardiology","Neurology","Orthopedics","General Medicine","Pediatrics"];
+
+function save(){
+localStorage.setItem(KEY,JSON.stringify(patients));
+}
+
+function openLogin(){
+document.getElementById("website").style.display="none";
+document.getElementById("loginPage").style.display="flex";
+}
+
+function backHome(){
+document.getElementById("loginPage").style.display="none";
+document.getElementById("website").style.display="block";
+}
+
+function login(){
+let u=document.getElementById("username").value;
+let p=document.getElementById("password").value;
+if(u==="admin"&&p==="meddata123"){
+document.getElementById("loginPage").style.display="none";
+document.getElementById("admin").style.display="block";
+document.getElementById("date").textContent=new Date().toLocaleDateString("en-IN",{dateStyle:"medium"});
+refresh();
+}else{
+document.getElementById("loginError").textContent="Incorrect username or password.";
+}
+}
+
+function logout(){
+document.getElementById("admin").style.display="none";
+document.getElementById("website").style.display="block";
+document.getElementById("username").value="";
+document.getElementById("password").value="";
+}
+
+function showPage(name,button){
+document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+document.getElementById(name).classList.add("active");
+document.getElementById("pageTitle").textContent=name.charAt(0).toUpperCase()+name.slice(1);
+document.querySelectorAll(".sidebar button").forEach(b=>b.classList.remove("active"));
+button.classList.add("active");
+if(name==="analytics")renderAnalytics();
+if(name==="reports")renderReport();
+}
+
+function count(status){
+return patients.filter(p=>p.status===status).length;
+}
+
+function safe(value){
+return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function addPatient(){
+let name=document.getElementById("patientName").value.trim();
+let age=Number(document.getElementById("patientAge").value);
+let department=document.getElementById("patientDepartment").value;
+let status=document.getElementById("patientStatus").value;
+if(!name||!Number.isInteger(age)||age<1||age>120||!departments.includes(department)){
+alert("Please enter valid patient details.");
+return;
+}
+patients.push({id:Date.now(),name,age,department,status});
+save();
+document.getElementById("patientName").value="";
+document.getElementById("patientAge").value="";
+document.getElementById("patientDepartment").value="";
+document.getElementById("message").textContent="Patient registered successfully!";
+refresh();
+}
+
+function renderPatients(){
+let search=(document.getElementById("search").value||"").toLowerCase();
+let filter=document.getElementById("filter").value;
+let data=patients.filter(p=>p.name.toLowerCase().includes(search)&&(!filter||p.status===filter));
+document.getElementById("patientTable").innerHTML=data.map(p=>`
+<tr>
+<td>${p.id}</td><td>${safe(p.name)}</td><td>${p.age}</td>
+<td>${safe(p.department)}</td>
+<td><span class="status ${p.status.toLowerCase()}">${p.status}</span></td>
+<td class="actions"><button onclick="editPatient(${p.id})">Edit</button><button class="danger" onclick="deletePatient(${p.id})">Delete</button></td>
+</tr>`).join("");
+}
+
+function editPatient(id){
+let p=patients.find(x=>x.id===id);
+if(!p)return;
+let name=prompt("Patient name:",p.name);
+if(name===null)return;
+let age=prompt("Patient age:",p.age);
+if(age===null)return;
+let dep=prompt("Department:",p.department);
+if(dep===null)return;
+let status=prompt("Status: Completed, Pending or Cancelled",p.status);
+if(!name.trim()||!Number.isInteger(Number(age))||Number(age)<1||Number(age)>120||!departments.includes(dep)||!["Completed","Pending","Cancelled"].includes(status)){
+alert("Invalid details.");
+return;
+}
+Object.assign(p,{name:name.trim(),age:Number(age),department:dep,status});
+save();refresh();
+}
+
+function deletePatient(id){
+if(confirm("Delete this patient record?")){
+patients=patients.filter(p=>p.id!==id);
+save();refresh();
+}
+}
+
+function chart(id,type,labels,data){
+if(charts[id])charts[id].destroy();
+charts[id]=new Chart(document.getElementById(id),{
+type:type,
+data:{labels:labels,datasets:[{label:"Patients",data:data,backgroundColor:["#2878d4","#38a78a","#efb64f","#db6674","#8c78c9"],borderWidth:1}]},
+options:{responsive:true,plugins:{legend:{position:"bottom"}}}
+});
+}
+
+function renderDashboard(){
+let total=patients.length,done=count("Completed");
+document.getElementById("total").textContent=total;
+document.getElementById("completed").textContent=done;
+document.getElementById("pending").textContent=count("Pending");
+document.getElementById("rate").textContent=(total?Math.round(done/total*100):0)+"%";
+chart("statusChart","doughnut",["Completed","Pending","Cancelled"],["Completed","Pending","Cancelled"].map(count));
+chart("departmentChart","bar",departments,departments.map(d=>patients.filter(p=>p.department===d).length));
+let messages=[];
+if(!total)messages.push("No patient records available.");
+else{
+messages.push("There are "+total+" patient records.");
+messages.push("The completion rate is "+Math.round(done/total*100)+"%.");
+let top=departments.map(d=>({name:d,n:patients.filter(p=>p.department===d).length})).sort((a,b)=>b.n-a.n)[0];
+if(top.n)messages.push(top.name+" has the highest number of records.");
+}
+document.getElementById("insights").innerHTML=messages.map(m=>`<div class="insight">${safe(m)}</div>`).join("");
+}
+
+function renderAnalytics(){
+let ages=patients.map(p=>p.age);
+let avg=ages.length?Math.round(ages.reduce((a,b)=>a+b,0)/ages.length):0;
+document.getElementById("averageAge").textContent=avg;
+document.getElementById("youngest").textContent=ages.length?Math.min(...ages):0;
+document.getElementById("oldest").textContent=ages.length?Math.max(...ages):0;
+document.getElementById("analyticsTotal").textContent=patients.length;
+let groups=["0–17","18–30","31–45","46–60","61+"];
+let values=[ages.filter(a=>a<=17).length,ages.filter(a=>a>=18&&a<=30).length,ages.filter(a=>a>=31&&a<=45).length,ages.filter(a=>a>=46&&a<=60).length,ages.filter(a=>a>=61).length];
+chart("ageChart","bar",groups,values);
+chart("analyticsDepartment","pie",departments,departments.map(d=>patients.filter(p=>p.department===d).length));
+}
+
+function renderReport(){
+document.getElementById("reportSummary").textContent="Total: "+patients.length+" | Completed: "+count("Completed")+" | Pending: "+count("Pending")+" | Cancelled: "+count("Cancelled");
+}
+
+function exportCSV(){
+let rows=[["ID","Name","Age","Department","Status"],...patients.map(p=>[p.id,p.name,p.age,p.department,p.status])];
+let csv=rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+let blob=new Blob([csv],{type:"text/csv"});
+let url=URL.createObjectURL(blob);
+let a=document.createElement("a");
+a.href=url;a.download="MedData_Insights_Report.csv";a.click();
+URL.revokeObjectURL(url);
+}
+
+function exportPDF(){
+if(!window.jspdf){alert("PDF library unavailable. Check your internet connection.");return;}
+const {jsPDF}=window.jspdf;
+let doc=new jsPDF();
+doc.setFontSize(18);doc.text("MedData Insights",15,20);
+doc.setFontSize(11);doc.text("Healthcare Analytics Report",15,29);
+doc.text("Generated: "+new Date().toLocaleDateString(),15,38);
+doc.text("Total Patients: "+patients.length,15,50);
+doc.text("Completed: "+count("Completed"),15,59);
+doc.text("Pending: "+count("Pending"),15,68);
+doc.text("Cancelled: "+count("Cancelled"),15,77);
+let y=92;
+patients.forEach(p=>{
+if(y>275){doc.addPage();y=20;}
+doc.text(String(p.id)+" | "+p.name+" | "+p.age+" | "+p.department+" | "+p.status,15,y);
+y+=8;
+});
+doc.save("MedData_Insights_Report.pdf");
+}
+
+function clearData(){
+if(confirm("Delete all demonstration patient records?")){
+patients=[];save();refresh();
+}
+}
+
+function refresh(){
+renderDashboard();
+renderPatients();
+renderReport();
+}
+
+</script>
+</body>
+</html>
